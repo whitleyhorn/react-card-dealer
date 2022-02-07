@@ -1,17 +1,18 @@
 import React, { Component } from 'react';
 import Card from './Card';
+import { v4 as uuid } from 'uuid';
 
 class Dealer extends Component {
     constructor(props){
         super(props); 
         this.state = {
             cards: [],
-            deckId: undefined
+            deckId: undefined,
+            cardsRemaining: 52
         }
 
         this.componentDidMount = this.componentDidMount.bind(this);
         this.draw = this.draw.bind(this);
-        console.log(React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED);
     }
 
     async componentDidMount() {
@@ -22,13 +23,15 @@ class Dealer extends Component {
     }
 
     async draw(){
-        let card = await fetch(`https://deckofcardsapi.com/api/deck/${this.state.deckId}/draw/`);
-        card = await card.json();
-        card = card.cards[0];
+        let deckInfo = await fetch(`https://deckofcardsapi.com/api/deck/${this.state.deckId}/draw/`);
+        deckInfo = await deckInfo.json();
+        console.log(deckInfo);
+        let card = deckInfo.cards[0];
 
         card.transformDegree = Math.random() * 30 - 5;
+        card.uuid = uuid();
         this.setState(st => {
-            return {cards: [...st.cards, card]};
+            return {cards: [...st.cards, card], cardsRemaining: deckInfo.remaining};
         })
     }
 
@@ -36,9 +39,12 @@ class Dealer extends Component {
         let buttonStyle = {position: 'absolute', right: 0, left: 0, margin: '0 auto', width: '100px'};
         return (
             <div className="Dealer">
-                { this.state.cards.map(c => <Card cardObject={c} />) }
+                { this.state.cards.map(c => <Card cardObject={c} key={c.uuid}/>) }
 
-                <button onClick={this.draw} style={buttonStyle}>Gimme a card!</button>
+                { this.state.cardsRemaining > 0 ? 
+                        <button onClick={this.draw} style={buttonStyle}>Gimme a card!</button> :
+                        ''
+                }
             </div>
         );
     }
